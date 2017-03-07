@@ -73,10 +73,10 @@ InitResult KltHomographyInit::addSecondFrame(FramePtr frame_cur)
   double scale = Config::mapScale()/scene_depth_median;
   frame_cur->T_f_w_ = T_cur_from_ref_ * frame_ref_->T_f_w_;
   frame_cur->T_f_w_.translation() =
-      -frame_cur->T_f_w_.rotation_matrix()*(frame_ref_->pos() + scale*(frame_cur->pos() - frame_ref_->pos()));
+      -frame_cur->T_f_w_.rotationMatrix()*(frame_ref_->pos() + scale*(frame_cur->pos() - frame_ref_->pos()));
 
   // For each inlier create 3D point and add feature in both frames
-  SE3 T_world_cur = frame_cur->T_f_w_.inverse();
+  SE3d T_world_cur = frame_cur->T_f_w_.inverse();
   for(vector<int>::iterator it=inliers_.begin(); it!=inliers_.end(); ++it)
   {
     Vector2d px_cur(px_cur_[*it].x, px_cur_[*it].y);
@@ -175,7 +175,7 @@ void computeHomography(
     double reprojection_threshold,
     vector<int>& inliers,
     vector<Vector3d>& xyz_in_cur,
-    SE3& T_cur_from_ref)
+    SE3d& T_cur_from_ref)
 {
   vector<Vector2d, aligned_allocator<Vector2d> > uv_ref(f_ref.size());
   vector<Vector2d, aligned_allocator<Vector2d> > uv_cur(f_cur.size());
@@ -188,7 +188,7 @@ void computeHomography(
   Homography.computeSE3fromMatches();
   vector<int> outliers;
   vk::computeInliers(f_cur, f_ref,
-                     Homography.T_c2_from_c1.rotation_matrix(), Homography.T_c2_from_c1.translation(),
+                     Homography.T_c2_from_c1.rotationMatrix(), Homography.T_c2_from_c1.translation(),
                      reprojection_threshold, focal_length,
                      xyz_in_cur, inliers, outliers);
   T_cur_from_ref = Homography.T_c2_from_c1;
