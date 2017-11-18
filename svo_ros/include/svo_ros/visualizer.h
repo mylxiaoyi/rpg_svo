@@ -39,6 +39,7 @@ class Frame;
 class Point;
 class Map;
 class FrameHandlerMono;
+class FrameHandlerRGBD;
 
 typedef boost::shared_ptr<Frame> FramePtr;
 
@@ -72,6 +73,11 @@ public:
       const FramePtr& frame,
       const FrameHandlerMono& slam,
       const double timestamp);
+  void publishMinimal(
+          const cv::Mat& img,
+          const FramePtr& frame,
+          const FrameHandlerRGBD& slam,
+          const double timestamp);
 
   void visualizeMarkers(
       const FramePtr& frame,

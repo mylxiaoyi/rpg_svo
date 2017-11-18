@@ -49,6 +49,7 @@ public:
   Sophus::SE3d                   T_f_w_;                 //!< Transform (f)rame from (w)orld.
   Matrix<double, 6, 6>          Cov_;                   //!< Covariance.
   ImgPyr                        img_pyr_;               //!< Image Pyramid.
+  ImgPyr                        depth_pyr_;             //!< Depth Pyramid.
   Features                      fts_;                   //!< List of features in the image.
   vector<Feature*>              key_pts_;               //!< Five features and associated 3D points which are used to detect if two frames have overlapping field of view.
   bool                          is_keyframe_;           //!< Was this frames selected as keyframe?
@@ -56,10 +57,12 @@ public:
   int                           last_published_ts_;     //!< Timestamp of last publishing.
 
   Frame(vk::AbstractCamera* cam, const cv::Mat& img, double timestamp);
+  Frame(vk::AbstractCamera *cam, const cv::Mat &img, const cv::Mat& depth, double timestamp);
   ~Frame();
 
   /// Initialize new frame and create image pyramid.
   void initFrame(const cv::Mat& img);
+  void initFrame(const cv::Mat& img, const cv::Mat& depth);
 
   /// Select this frame as keyframe.
   void setKeyframe();
@@ -135,7 +138,31 @@ public:
     J(1,3) = 1.0 + y*J(1,2);      // 1.0 + y^2/z^2
     J(1,4) = -J(0,3);             // -x*y/z^2
     J(1,5) = -x*z_inv;            // x/z
+
+//    std::cout << "xyz_in_f = " << xyz_in_f << std::endl;
+
+    assert(!std::isnan(J(0,0)) && !std::isinf(J(0,0)));
+    assert(!std::isnan(J(0,1)) && !std::isinf(J(0,1)));
+    assert(!std::isnan(J(0,2)) && !std::isinf(J(0,2)));
+    assert(!std::isnan(J(0,3)) && !std::isinf(J(0,3)));
+    assert(!std::isnan(J(0,4)) && !std::isinf(J(0,4)));
+    assert(!std::isnan(J(0,5)) && !std::isinf(J(0,5)));
+    assert(!std::isnan(J(1,0)) && !std::isinf(J(1,0)));
+    assert(!std::isnan(J(1,1)) && !std::isinf(J(1,1)));
+    assert(!std::isnan(J(1,2)) && !std::isinf(J(1,2)));
+    assert(!std::isnan(J(1,3)) && !std::isinf(J(1,3)));
+    assert(!std::isnan(J(1,4)) && !std::isinf(J(1,4)));
+    assert(!std::isnan(J(1,5)) && !std::isinf(J(1,5)));
   }
+
+  void detectFeatures();
+
+  float getDepth(
+          const cv::Mat & depthImage,
+          float x, float y,
+          bool smoothing = true,
+          float maxZError = 0.02f,
+          bool estWithNeighborsIfNull = false);
 };
 
 
@@ -144,6 +171,8 @@ namespace frame_utils {
 
 /// Creates an image pyramid of half-sampled images.
 void createImgPyramid(const cv::Mat& img_level_0, int n_levels, ImgPyr& pyr);
+
+void buildImgPyramid(const cv::Mat& img_level_0, int n_levels, ImgPyr& pyr);
 
 /// Get the average depth of the features in the image.
 bool getSceneDepth(const Frame& frame, double& depth_mean, double& depth_min);

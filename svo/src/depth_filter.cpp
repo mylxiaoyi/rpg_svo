@@ -108,7 +108,13 @@ void DepthFilter::addKeyframe(FramePtr frame, double depth_mean, double depth_mi
     frame_queue_cond_.notify_one();
   }
   else
-    initializeSeeds(frame);
+//    initializeSeeds(frame);
+      detectFeatures(frame);
+}
+
+void DepthFilter::detectFeatures(FramePtr frame)
+{
+    frame->detectFeatures();
 }
 
 void DepthFilter::initializeSeeds(FramePtr frame)
@@ -188,9 +194,11 @@ void DepthFilter::updateSeedsLoop()
         frame_queue_.pop();
       }
     }
-    updateSeeds(frame);
+//    updateSeeds(frame);
+//    if(frame->isKeyframe())
+//      initializeSeeds(frame);
     if(frame->isKeyframe())
-      initializeSeeds(frame);
+        detectFeatures(frame);
   }
 }
 

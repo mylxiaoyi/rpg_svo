@@ -58,6 +58,7 @@ size_t SparseImgAlign::run(FramePtr ref_frame, FramePtr cur_frame)
 
   SE3d T_cur_from_ref(cur_frame_->T_f_w_ * ref_frame_->T_f_w_.inverse());
 
+  std::cout << "max_level_ = " << max_level_ << ", min_level_ = " << min_level_ << std::endl;
   for(level_=max_level_; level_>=min_level_; --level_)
   {
     mu_ = 0.1;
@@ -68,8 +69,6 @@ size_t SparseImgAlign::run(FramePtr ref_frame, FramePtr cur_frame)
     optimize(T_cur_from_ref);
   }
   cur_frame_->T_f_w_ = T_cur_from_ref * ref_frame_->T_f_w_;
-
-
 
   return n_meas_/patch_area_;
 }
@@ -89,6 +88,7 @@ void SparseImgAlign::precomputeReferencePatches()
   const float scale = 1.0f/(1<<level_);
   const Vector3d ref_pos = ref_frame_->pos();
   const double focal_length = ref_frame_->cam_->errorMultiplier2();
+  std::cout << "focal_length = " << focal_length << std::endl;
   size_t feature_counter = 0;
   std::vector<bool>::iterator visiblity_it = visible_fts_.begin();
   for(auto it=ref_frame_->fts_.begin(), ite=ref_frame_->fts_.end();
@@ -105,6 +105,10 @@ void SparseImgAlign::precomputeReferencePatches()
 
     // cannot just take the 3d points coordinate because of the reprojection errors in the reference image!!!
     const double depth(((*it)->point->pos_ - ref_pos).norm());
+//    std::cout << "point->pos = " << (*it)->point->pos_ << std::endl;
+//    std::cout << "ref_pos = " << ref_pos << std::endl;
+//    std::cout << "depth = " << depth << std::endl;
+    assert(depth > 0.0 && !std::isnan(depth) && !std::isinf(depth));
     const Vector3d xyz_ref((*it)->f*depth);
 
     // evaluate projection jacobian
@@ -141,6 +145,7 @@ void SparseImgAlign::precomputeReferencePatches()
       }
     }
   }
+
   have_ref_patch_cache_ = true;
 }
 
@@ -149,6 +154,7 @@ double SparseImgAlign::computeResiduals(
     bool linearize_system,
     bool compute_weight_scale)
 {
+
   // Warp the (cur)rent image such that it aligns with the (ref)erence image
   const cv::Mat& cur_img = cur_frame_->img_pyr_.at(level_);
 
@@ -156,12 +162,18 @@ double SparseImgAlign::computeResiduals(
     resimg_ = cv::Mat(cur_img.size(), CV_32F, cv::Scalar(0));
 
   if(have_ref_patch_cache_ == false)
+  {
+    std::cout << "precompute reference patches" << std::endl;
     precomputeReferencePatches();
+  }
 
   // compute the weights on the first iteration
   std::vector<float> errors;
   if(compute_weight_scale)
+  {
+    std::cout << "compute weight scale" << std::endl;
     errors.reserve(visible_fts_.size());
+  }
   const int stride = cur_img.cols;
   const int border = patch_halfsize_+1;
   const float scale = 1.0f/(1<<level_);

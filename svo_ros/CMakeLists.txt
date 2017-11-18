@@ -13,7 +13,7 @@ ENDIF()
 
 
 # Add catkin and required ROS packages
-FIND_PACKAGE(catkin REQUIRED COMPONENTS 
+FIND_PACKAGE(catkin REQUIRED COMPONENTS
   roscpp
   cmake_modules
   nav_msgs
@@ -27,9 +27,10 @@ FIND_PACKAGE(catkin REQUIRED COMPONENTS
   svo_msgs
   vikit_common
   vikit_ros
+  cv_bridge
 )
 
-# Add plain cmake packages 
+# Add plain cmake packages
 FIND_PACKAGE(OpenCV REQUIRED)
 FIND_PACKAGE(Eigen REQUIRED)
 FIND_PACKAGE(Sophus REQUIRED)
@@ -54,7 +55,7 @@ INCLUDE_DIRECTORIES(
 )
 
 # Set link libraries
-LIST(APPEND LINK_LIBS 
+LIST(APPEND LINK_LIBS
   ${OpenCV_LIBS}
   ${Sophus_LIBRARIES}
   ${Boost_LIBRARIES}
@@ -64,8 +65,8 @@ LIST(APPEND LINK_LIBS
 # Create visualizer library
 ADD_LIBRARY(svo_visualizer src/visualizer.cpp)
 TARGET_LINK_LIBRARIES(svo_visualizer ${LINK_LIBS})
-                                 
-# Create Executables                      
+
+# Create Executables
 ADD_EXECUTABLE(vo src/vo_node.cpp)
 TARGET_LINK_LIBRARIES(vo svo_visualizer)
 ADD_EXECUTABLE(benchmark src/benchmark_node.cpp)

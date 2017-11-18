@@ -162,6 +162,9 @@ protected:
 
   /// A thread that is continuously updating the seeds.
   void updateSeedsLoop();
+
+  /// detect features for keyframe
+  void detectFeatures(FramePtr frame);
 };
 
 } // namespace svo
